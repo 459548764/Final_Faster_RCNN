@@ -69,7 +69,18 @@ if 'bg' not in classes_count:
 
 C.class_mapping = class_mapping
 
+
+
+
+
 inv_map = {v: k for k, v in class_mapping.iteritems()}
+
+
+
+
+
+
+
 
 print('Training images per class:')
 pprint.pprint(classes_count)
@@ -91,14 +102,17 @@ val_imgs = [s for s in all_imgs if s['imageset'] == 'test']
 print('Num train samples {}'.format(len(train_imgs)))
 print('Num val samples {}'.format(len(val_imgs)))
 
-
-data_gen_train = data_generators.get_anchor_gt(train_imgs, classes_count, C, K.image_dim_ordering(), mode='train')
-data_gen_val = data_generators.get_anchor_gt(val_imgs, classes_count, C, K.image_dim_ordering(), mode='val')
+import keras
+keras.backend.set_image_dim_ordering('tf')
 
 if K.image_dim_ordering() == 'th':
 	input_shape_img = (3, None, None)
 else:
 	input_shape_img = (None, None, 3)
+
+data_gen_train = data_generators.get_anchor_gt(train_imgs, classes_count, C, K.image_dim_ordering(), mode='train')
+data_gen_val = data_generators.get_anchor_gt(val_imgs, classes_count, C, K.image_dim_ordering(), mode='val')
+
 
 img_input = Input(shape=input_shape_img)
 roi_input = Input(shape=(C.num_rois, 4))
@@ -118,15 +132,18 @@ model_classifier = Model([img_input, roi_input], classifier)
 # this is a model that holds both the RPN and the classifier, used to load/save weights for the models
 model_all = Model([img_input, roi_input], rpn[:2] + classifier)
 
-try:
-	print('loading weights from {}'.format(C.base_net_weights))
-	model_rpn.load_weights(C.base_net_weights, by_name=True)
-	model_classifier.load_weights(C.base_net_weights, by_name=True)
-except:
-	print('Could not load pretrained model weights. Weights can be found at {} and {}'.format(
-		'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_th_dim_ordering_th_kernels_notop.h5',
-		'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5'
-	))
+
+#try:
+import os
+print (os.getcwd())
+print('loading weights from {}'.format(C.base_net_weights))
+model_rpn.load_weights('resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5', by_name=True)
+model_classifier.load_weights('resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5', by_name=True)
+#except:
+#	print('Could not load pretrained model weights. Weights can be found at {} and {}'.format(
+#		'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_th_dim_ordering_th_kernels_notop.h5',
+#		'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5'
+#	))
 
 optimizer = Adam(lr=1e-4)
 optimizer_classifier = Adam(lr=1e-4)

@@ -10,8 +10,9 @@ def augment(img_data, config, augment=True):
 	assert 'height' in img_data
 
 	img_data_aug = copy.deepcopy(img_data)
-
-	img = cv2.imread(img_data_aug['filepath'])
+	files=img_data_aug['filepath'] 
+	files+='.jpg'    
+	img = cv2.imread(files)
 
 	if augment:
 		rows, cols = img.shape[:2]
